@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import java.net.URL?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane id="AnchorPane" fx:id="rootPane" prefHeight="400.0" prefWidth="600.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.171" fx:controller="librarysystem.UI.listmember.MemberListController">
+<AnchorPane id="AnchorPane" fx:id="rootPane" prefHeight="400.0" prefWidth="600.0" styleClass="mainFxmlClass" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="librarysystem.UI.listmember.MemberListController">
     <stylesheets>
         <URL value="@member_list.css" />
     </stylesheets>
@@ -18,8 +20,17 @@
             <TableColumn fx:id="emailCol" prefWidth="75.0" text="Email" />
          </columns>
          <columnResizePolicy>
-            <!--<TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />-->
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy>
+         <contextMenu>
+            <ContextMenu>
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#handleMemberEditAction" text="Edit" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleMemberDeleteAction" text="Delete" />
+                  <MenuItem mnemonicParsing="false" onAction="#handleMemberRefreshAction" text="Refresh" />
+              </items>
+            </ContextMenu>
+         </contextMenu>
       </TableView>
    </children>
 </AnchorPane>

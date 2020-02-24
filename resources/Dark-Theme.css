@@ -1,0 +1,86 @@
+
+*{
+   -fx-primary : #2A2E37;
+   -fx-secondary : #FFFF8D;
+   -fx-primarytext : #B2B2B2;
+   -fx-red: red;
+
+}
+
+.root{
+   -fx-background-color: -fx-primary;
+}
+.glyph-icon{
+   -fx-fill : -fx-primarytext;
+}
+.button{
+   -fx-text-fill: -fx-primarytext;
+   -fx-background-color: -fx-primary;
+   -fx-border-color: -fx-secondary;
+   -fx-background-radius: 20px;
+   -fx-border-radius: 20px;
+   -fx-font-size : 13pt;
+}
+
+.button:hover{
+   -fx-border-color: -fx-secondary;
+   -fx-background-color: -fx-secondary;
+   -fx-text-fill: -fx-primary;
+}
+.text-field
+{
+   -fx-text-fill: -fx-primarytext;
+   -fx-font-size: 13px;
+   -jfx-focus-color: -fx-secondary;
+}
+.wrong-credentials
+{
+   -jfx-unfocus-color:-fx-red;
+   -jfx-focus-color: -fx-red;
+}
+
+/* Main screen css styling */
+/* TabPane styling*/
+.tab{
+   -fx-background-color: -fx-primary;
+   -fx-pref-width : 200;
+   -fx-pref-height : 50;
+}
+
+.tab-header-background
+{
+   -fx-background-color: -fx-primary;
+}
+
+/* MenuBar styling*/
+
+.menu-bar
+{
+   -fx-base: -fx-primary;
+   -fx-background-color: -fx-primary;
+}
+.context-menu{
+   -fx-background-color: derive(-fx-primary, 20%);
+}
+
+/* Hamburger Styling*/
+.jfx-hamburger-icon
+{
+   -fx-spacing: 7;
+}
+.jfx-hamburger-icon StackPane
+{
+   -fx-background-color: -fx-secondary;
+   -fx-background-radius: 5px;
+}
+
+/* main text   */
+.main-text{
+   -fx-fill: -fx-secondary;
+   -fx-font-size: 14px;
+   -fx-text-alignment: center;
+}
+
+.submission-container{
+   -fx-background-color: derive(-fx-primary, 10%);
+}
