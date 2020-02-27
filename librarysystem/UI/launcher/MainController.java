@@ -9,6 +9,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.TimeUnit;
@@ -17,23 +18,28 @@ import java.util.logging.Logger;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.PieChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import jdk.nashorn.internal.objects.NativeDate;
 import library.database.DatabaseHandler;
+import librarysystem.alert.AlertMaker;
 
 public class MainController implements Initializable {
 
@@ -62,6 +68,7 @@ public class MainController implements Initializable {
    private ListView<String> issueDataList;
    @FXML
    private JFXButton submissionBtn;
+   @FXML
    private StackPane rootPane;
    @FXML
    private VBox toolBar;
@@ -71,7 +78,7 @@ public class MainController implements Initializable {
    private Text memberEmailholder;
    @FXML
    private Text bookNameHolder;
-   private Text bookPublisher;
+
    @FXML
    private Text bookIssueDate;
    @FXML
@@ -79,14 +86,29 @@ public class MainController implements Initializable {
    @FXML
    private Text finePerDay;
 
-   Boolean isReadyForSubmission = false;
-   DatabaseHandler databaseHandler;
    @FXML
    private Text memberContactHolder;
    @FXML
    private Text bookAuthorHolder;
    @FXML
    private Text bookPublisherHolder;
+   @FXML
+   private JFXButton renewButton;
+   @FXML
+   private HBox submissionDataContainer;
+   @FXML
+   private AnchorPane rootAnchorPane;
+   @FXML
+   private StackPane bookInfoContainer;
+
+   Boolean isReadyForSubmission = false;
+   DatabaseHandler databaseHandler;
+   PieChart bookChart;
+   PieChart memberChart;
+   @FXML
+   private StackPane memberInfoContainer;
+   @FXML
+   private Tab bookIssueTab;
 
    @Override
    public void initialize(URL url, ResourceBundle rb) {
@@ -95,6 +117,7 @@ public class MainController implements Initializable {
 
       databaseHandler = DatabaseHandler.getInstance();
 //      initDrawer();
+      initGraph();
 
    }
 
@@ -135,6 +158,8 @@ public class MainController implements Initializable {
 
    @FXML
    private void loadMemberInfo(ActionEvent event) {
+      enableDisableGraph(false);
+
       String id = memberIdInput.getText();
       String qu = "SELECT * FROM MEMBER WHERE id = '" + id + "'";
       ResultSet rs = databaseHandler.execQuery(qu);
@@ -163,6 +188,8 @@ public class MainController implements Initializable {
 
    @FXML
    private void loadBookInfo(ActionEvent event) {
+      enableDisableGraph(false);
+
       String bookId = bookIdInput.getText();
       String qu = "SELECT * FROM BOOK WHERE id = ' " + bookId + " ' ";
       ResultSet rs = databaseHandler.execQuery(qu);
@@ -196,46 +223,46 @@ public class MainController implements Initializable {
       String memberID = memberIdInput.getText();
       String bookID = bookIdInput.getText();
 
-      Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-      alert.setTitle("Confirmation Isuue Operation");
-      alert.setHeaderText(null);
-      alert.setContentText("Are you sure want to issue the book" + bookName.getText() + "\n to" + memberName.getText() + "?");
+      JFXButton yesButton = new JFXButton("YES");
+      yesButton.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event1) -> {
+         String str = "INSERT INTO ISSUE(memberID, bookID) VALUES ("
+                 + "'" + memberID + "',"
+                 + "'" + bookID + "')";
+         String str2 = "UPDATE BOOK SET isAvail = false WHERE id = '" + bookID + "' ";
+         System.out.println(str + "and" + str2);
 
-      Optional<ButtonType> response = alert.showAndWait();
-      if (response.get() == ButtonType.OK) {
-         String id = bookId.getText();
-         String ac1 = "DELETE FROM ISSUE WHERE BOOKID = '" + id + "'";
-         String ac2 = "UPDATE BOOK SET ISAVAL = TRUE WHERE ID = '" + id + "'";
-//           String str = "INSERT INTO ISSUE(memberID, bookID) VALUES ("
-//                   + "'" + memberID + "',"
-//                   + "'" + bookID + "')";
-//           String str2 = "UPDATE BOOK SET isAvail = false WHERE id = '" + bookID +"' ";
-//           System.out.println(str + "and" + str2);
+         if (databaseHandler.execAction(str) && databaseHandler.execAction(str)) {
 
-         if (databaseHandler.execAction(ac1) && databaseHandler.execAction(ac2)) {
-            Alert alert2 = new Alert(Alert.AlertType.INFORMATION);
-            alert2.setTitle("Succes");
-            alert2.setHeaderText(null);
-            alert2.setContentText("Book Issue Complete");
-            alert2.showAndWait();
+            JFXButton button = new JFXButton("Done");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(button), "Book Issue Complete", null);
+            refreshGraphs();
+
          } else {
-            Alert alert2 = new Alert(Alert.AlertType.ERROR);
-            alert2.setTitle("Failed");
-            alert2.setHeaderText(null);
-            alert2.setContentText("Issue Operation Failed");
-            alert2.showAndWait();
+
+            JFXButton button = new JFXButton("OKay.I'll Check");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(button), "Issue Operation Failed", null);
          }
-      } else {
-         Alert alert2 = new Alert(Alert.AlertType.INFORMATION);
-         alert2.setTitle("Cancelled");
-         alert2.setHeaderText(null);
-         alert2.setContentText("Issue Operation Cancelled");
-         alert2.showAndWait();
-      }
+
+         clearIssueEntries();
+
+      });
+
+      JFXButton noButton = new JFXButton("NO");
+      noButton.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event1) -> {
+
+         JFXButton button = new JFXButton("OKay");
+         AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(button), "Issue Operation Cancelled", null);
+
+         clearIssueEntries();
+      });
+
+      AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(yesButton, noButton), "confirm issue", "Are you sure want to issue the book" + bookName.getText() + " to" + memberName.getText() + "?");
+
    }
 
    @FXML
    private void loadBookIssuedInfo(ActionEvent event) {
+      clearEntries();
       ObservableList<String> issueData = FXCollections.observableArrayList();
       isReadyForSubmission = false;
 
@@ -270,50 +297,19 @@ public class MainController implements Initializable {
             finePerDay.setText("Not supported  yet");
 
             isReadyForSubmission = true;
+            disableEnableControls(true);
+            submissionDataContainer.setOpacity(1);
+
+         } else {
+            // pop up jfxDialog
+            JFXButton button = new JFXButton("Okay.I'll check");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(button), "No such book exists in database", null);
          }
+
       } catch (Exception ex) {
          ex.printStackTrace();
       }
 
-//      String qu = "SELECT * FROM ISSUE WHERE bookID = '" + id + "' ";
-//      ResultSet rs = databaseHandler.execQuery(qu);
-//
-//      try {
-//         while (rs.next()) {
-//            String mBookID = id;
-//            String mMemberID = rs.getString("memberID");
-//            Timestamp mIssueTime = rs.getTimestamp("issueTime");
-//            int mRenewCount = rs.getInt("renew_count");
-//
-//            issueData.add("Issue Date and Time :" + mIssueTime.toGMTString());
-//            issueData.add("Renew count :" + mRenewCount);
-//
-//            issueData.add("Book Information :");
-//            qu = "SELECT * FROM BOOK WHERE ID = '" + mBookID + "' ";
-//            ResultSet rs2 = databaseHandler.execQuery(qu);
-//
-//            while (rs2.next()) {
-//               issueData.add("\tBook Name :" + rs2.getString("title"));
-//               issueData.add("\tBook ID :" + rs2.getString("id"));
-//               issueData.add("\tBook Author :" + rs2.getString("author"));
-//               issueData.add("\tBook Publisher :" + rs2.getString("publisher"));
-//            }
-//            qu = "SELECT * FROM MEMBER WHERE ID = '" + mMemberID + "' ";
-//            rs2 = databaseHandler.execQuery(qu);
-//            issueData.add("Member Information");
-//            while (rs2.next()) {
-//               issueData.add("\tName :" + rs2.getString("name"));
-//               issueData.add("\tMobile :" + rs2.getString("mobile"));
-//               issueData.add("\tEmail :" + rs2.getString("email"));
-//            }
-//
-//            isReadyForSubmission = true;
-//         }
-//      } catch (SQLException ex) {
-//         Logger.getLogger(MainController.class.getName()).log(Level.SEVERE, null, ex);
-//      }
-//
-//      issueDataList.getItems().setAll(issueData);
    }
 
    @FXML
@@ -340,19 +336,22 @@ public class MainController implements Initializable {
          String ac2 = "UPDATE BOOK SET ISAVAL = TRUE WHERE ID = '" + id + "'";
 
          if (databaseHandler.execAction(ac1) && databaseHandler.execAction(ac2)) {
-            Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success");
-            alert.setHeaderText(null);
-            alert.setContentText("Book Has Been Submitted");
-            alert.showAndWait();
+
+            JFXButton btn = new JFXButton("Done");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "The book has been submitted", null);
+            loadBookIssuedInfo(null);
+            disableEnableControls(false);
+            submissionDataContainer.setOpacity(0);
+
          } else {
-            Alert alert1 = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Failed");
-            alert.setHeaderText(null);
-            alert.setContentText("Submission Has Failed");
-            alert.showAndWait();
+            JFXButton btn = new JFXButton("Okay.I'll check");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "Submission Has Failed", null);
+
          }
       } else {
+         JFXButton btn = new JFXButton("Okay");
+         AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "Submission operation cancelled", null);
+
          Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
          alert.setTitle("Cancelled");
          alert.setHeaderText(null);
@@ -363,47 +362,74 @@ public class MainController implements Initializable {
 
    @FXML
    private void loadIssueOp(ActionEvent event) {
+
       if (!isReadyForSubmission) {
-         Alert alert = new Alert(Alert.AlertType.ERROR);
-         alert.setTitle("Failed");
-         alert.setHeaderText(null);
-         alert.setContentText("Please select a book to renew");
-         alert.showAndWait();
+         JFXButton btn = new JFXButton("Okay");
+         AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "Please select a book to renew", "Can't submit a null book");
          return;
       }
 
-      Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-      alert.setTitle("Confirm Renew Operation");
-      alert.setHeaderText(null);
-      alert.setContentText("Are you sure you want to renew the book ?");
-//            alert.showAndWait();
+      JFXButton yesButton = new JFXButton("Yes, Please");
+      yesButton.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent evnt) -> {
+         String id = bookId.getText();
+         String ac1 = "DELETE FROM ISSUE WHERE BOOKID = '" + id + "'";
+         String ac2 = "UPDATE BOOK SET ISAVAL = TRUE WHERE ID = '" + id + "'";
 
-      Optional<ButtonType> response = alert.showAndWait();
-      if (response.get() == ButtonType.OK) {
-         String ac = "UPDATE ISSUE SET issueTime = CURRENT_TIMESTAMP, RENEW_COUNT = RENEW_COUNT+1 WHERE BOOKID = '" + bookId.getText() + "'";
-         System.out.println(ac);
+         if (databaseHandler.execAction(ac1) && databaseHandler.execAction(ac2)) {
 
-         if (databaseHandler.execAction(ac)) {
-            Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success");
-            alert.setHeaderText(null);
-            alert.setContentText("Book Has Been Renewed");
-            alert.showAndWait();
+            JFXButton btn = new JFXButton("Done");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "The book has been submitted", null);
+            loadBookIssuedInfo(null);
+            disableEnableControls(false);
+            submissionDataContainer.setOpacity(0);
+
          } else {
-            Alert alert1 = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Failed");
-            alert.setHeaderText(null);
-            alert.setContentText("Renew operation failed");
-            alert.showAndWait();
-         }
-      } else {
-         Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
-         alert.setTitle("Cancelled");
-         alert.setHeaderText(null);
-         alert.setContentText("Renew operation cancelled");
-         alert.showAndWait();
-      }
+            JFXButton btn = new JFXButton("Okay.I'll check");
+            AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "Submission Has Failed", null);
 
+         }
+      });
+
+      JFXButton noButton = new JFXButton("No");
+      noButton.addEventFilter(MouseEvent.MOUSE_CLICKED, (MouseEvent ev) -> {
+         JFXButton btn = new JFXButton("Okay");
+         AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(btn), "submission cancelled", null);
+      });
+
+      AlertMaker.showMaterialDialog(rootPane, rootAnchorPane, Arrays.asList(yesButton, noButton), "Confirm submission operation", "Are you want to submit the book");
+
+//      Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+//      alert.setTitle("Confirm Renew Operation");
+//      alert.setHeaderText(null);
+//      alert.setContentText("Are you sure you want to renew the book ?");
+////            alert.showAndWait();
+//
+//      Optional<ButtonType> response = alert.showAndWait();
+//      if (response.get() == ButtonType.OK) {
+//         String ac = "UPDATE ISSUE SET issueTime = CURRENT_TIMESTAMP, RENEW_COUNT = RENEW_COUNT+1 WHERE BOOKID = '" + bookId.getText() + "'";
+//         System.out.println(ac);
+//
+//         if (databaseHandler.execAction(ac)) {
+//            Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
+//            alert.setTitle("Success");
+//            alert.setHeaderText(null);
+//            alert.setContentText("Book Has Been Renewed");
+//            alert.showAndWait();
+//            loadBookIssuedInfo(null);
+//         } else {
+//            Alert alert1 = new Alert(Alert.AlertType.ERROR);
+//            alert.setTitle("Failed");
+//            alert.setHeaderText(null);
+//            alert.setContentText("Renew operation failed");
+//            alert.showAndWait();
+//         }
+//      } else {
+//         Alert alert1 = new Alert(Alert.AlertType.INFORMATION);
+//         alert.setTitle("Cancelled");
+//         alert.setHeaderText(null);
+//         alert.setContentText("Renew operation cancelled");
+//         alert.showAndWait();
+//      }
    }
 
    @FXML
@@ -467,4 +493,73 @@ public class MainController implements Initializable {
 //      });
 //
 //   }
+   private void clearEntries() {
+      memberNameHolder.setText("");
+      memberEmailholder.setText("");
+      memberContactHolder.setText("");
+
+      bookNameHolder.setText("");
+      bookAuthorHolder.setText("");
+      bookPublisherHolder.setText("");
+
+      bookIssueDate.setText("");
+      nofDays.setText("");
+      finePerDay.setText("");
+
+      disableEnableControls(false);
+      submissionDataContainer.setOpacity(0);
+   }
+
+   private void disableEnableControls(boolean enableConfig) {
+      if (enableConfig) {
+         renewButton.setDisable(false);
+         submissionBtn.setDisable(false);
+
+      } else {
+         renewButton.setDisable(true);
+         submissionBtn.setDisable(true);
+      }
+
+   }
+
+   private void clearIssueEntries() {
+      bookIdInput.clear();
+      memberIdInput.clear();
+      bookName.setText("");
+      bookAuthor.setText("");
+      bookStatus.setText("");
+      memberName.setText("");
+      memberContact.setText("");
+      enableDisableGraph(true);
+   }
+
+   private void initGraph() {
+      bookChart = new PieChart(databaseHandler.getBookGraphStatistics());
+      bookInfoContainer.getChildren().add(bookChart);
+      memberChart = new PieChart(databaseHandler.getMemberGraphStatistics());
+      memberInfoContainer.getChildren().add(memberChart);
+
+      bookIssueTab.setOnSelectionChanged((Event event) -> {
+         clearIssueEntries();
+         if (bookIssueTab.isSelected()) {
+            refreshGraphs();
+         }
+      });
+   }
+
+   private void enableDisableGraph(Boolean status) {
+      if (status) {
+         bookChart.setOpacity(1);
+         memberChart.setOpacity(1);
+      } else {
+         bookChart.setOpacity(0);
+         memberChart.setOpacity(0);
+      }
+   }
+
+   private void refreshGraphs() {
+      bookChart.setData(databaseHandler.getBookGraphStatistics());
+      memberChart.setData(databaseHandler.getMemberGraphStatistics());
+   }
+
 }

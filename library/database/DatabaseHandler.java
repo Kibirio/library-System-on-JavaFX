@@ -9,6 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.chart.PieChart;
 import javax.swing.JOptionPane;
 import library.UI.listBook.BookListController.Book;
 import librarysystem.UI.listmember.MemberListController.Member;
@@ -239,4 +242,57 @@ public class DatabaseHandler {
       return false;
    }
 
+   public ObservableList<PieChart.Data> getBookGraphStatistics() {
+      ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
+      String qu1 = "SELECT COUNT(*) FROM BOOK";
+      String qu2 = "SELECT COUNT(*) FROM ISSUE";
+      ResultSet rs = execQuery(qu1);
+      try {
+         if (rs.next()) {
+
+            int count = rs.getInt(1);
+            data.add(new PieChart.Data("Total Books (" + count + ")", count));
+
+         }
+
+         rs = execQuery(qu2);
+         if (rs.next()) {
+
+            int count = rs.getInt(1);
+            data.add(new PieChart.Data("Issued Books (" + count + ")", count));
+
+         }
+
+      } catch (SQLException ex) {
+         Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      return data;
+   }
+
+   public ObservableList<PieChart.Data> getMemberGraphStatistics() {
+      ObservableList<PieChart.Data> data = FXCollections.observableArrayList();
+      String qu1 = "SELECT COUNT(*) FROM MEMBER";
+      String qu2 = "SELECT COUNT(DISTINCT memberID) FROM ISSUE";
+      ResultSet rs = execQuery(qu1);
+      try {
+         if (rs.next()) {
+
+            int count = rs.getInt(1);
+            data.add(new PieChart.Data("Total Members (" + count + ")", count));
+
+         }
+
+         rs = execQuery(qu2);
+         if (rs.next()) {
+
+            int count = rs.getInt(1);
+            data.add(new PieChart.Data("Members with Books (" + count + ")", count));
+
+         }
+
+      } catch (SQLException ex) {
+         Logger.getLogger(DatabaseHandler.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      return data;
+   }
 }
